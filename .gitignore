@@ -1,0 +1,6 @@
+.env
+packages/
+vehicle_cache.db
+data/
+__pycache__
+.DS_Store
