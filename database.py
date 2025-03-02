@@ -35,11 +35,28 @@ def cache_vehicle_data(db, reg, data):
     vehicle = db.query(VehicleCache).filter(VehicleCache.registration_number == reg).first()
     
     if vehicle:
-        # Update all fields
-        for key, value in data.items():
-            if hasattr(vehicle, key):
-                setattr(vehicle, key, value)
-        vehicle.mot_data = json.dumps(data.get('motTests', []))
+        # Update all fields including nested MOT data
+        vehicle.make = data.get('make', vehicle.make)
+        vehicle.model = data.get('model', vehicle.model)
+        vehicle.first_used_date = data.get('firstUsedDate', vehicle.first_used_date)
+        vehicle.fuel_type = data.get('fuelType', vehicle.fuel_type)
+        vehicle.primary_colour = data.get('colour', vehicle.primary_colour)
+        vehicle.registration_date = data.get('registrationDate', vehicle.registration_date)
+        vehicle.manufacture_date = data.get('manufactureDate', vehicle.manufacture_date)
+        vehicle.engine_size = data.get('engineCapacity', vehicle.engine_size)
+        vehicle.tax_status = data.get('taxStatus', vehicle.tax_status)
+        vehicle.tax_due_date = data.get('taxDueDate', vehicle.tax_due_date)
+        vehicle.mot_status = data.get('motStatus', vehicle.mot_status)
+        vehicle.mot_expiry_date = data.get('motExpiryDate', vehicle.mot_expiry_date)
+        vehicle.year_of_manufacture = data.get('yearOfManufacture', vehicle.year_of_manufacture)
+        vehicle.co2_emissions = data.get('co2Emissions', vehicle.co2_emissions)
+        
+        # Merge and update MOT data
+        existing_mot_data = json.loads(vehicle.mot_data) if vehicle.mot_data else []
+        new_mot_data = data.get('motTests', [])
+        merged_mot_data = merge_mot_data(existing_mot_data, new_mot_data)
+        vehicle.mot_data = json.dumps(merged_mot_data)
+        
         vehicle.last_updated = datetime.utcnow()
         vehicle.last_requested = datetime.utcnow()
         vehicle.request_count += 1
@@ -117,10 +134,6 @@ class RequestLog(Base):
     is_cached = Column(Boolean)
     requested_at = Column(DateTime, default=datetime.utcnow)
     headers = Column(Text)  # Store all headers as JSON
-
-engine = create_engine('sqlite:///vehicle_cache.db')
-Base.metadata.create_all(engine)
-SessionLocal = sessionmaker(bind=engine)
 
 engine = create_engine('sqlite:///vehicle_cache.db')
 Base.metadata.create_all(engine)
