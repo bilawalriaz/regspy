@@ -44,7 +44,7 @@ async def vehicle():
             is_cached = check_cache_exists(db, reg)
             cached_data = get_cached_vehicle_data(db, reg) if is_cached else None
             
-            if cached_data:
+            if cached_data is not None:
                 print(f"Using cached data for: {reg}")
                 query_time = time.time() - start_time
                 log_request(db, reg, request_data, query_time, is_cached=True)

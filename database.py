@@ -72,6 +72,11 @@ def cache_vehicle_data(db, reg, data):
 def get_cached_vehicle_data(db, reg):
     vehicle = db.query(VehicleCache).filter(VehicleCache.registration_number == reg).first()
     if vehicle:
+        # Check if cache is older than 1 day
+        if (datetime.utcnow() - vehicle.last_updated).days >= 1:
+            # Cache is stale, return None to trigger fresh lookup
+            return None
+        
         vehicle.last_requested = datetime.utcnow()
         vehicle.request_count += 1
         db.commit()
@@ -83,7 +88,7 @@ def get_cached_vehicle_data(db, reg):
 def get_mot_history(db, reg):
     vehicle = db.query(VehicleCache).filter(VehicleCache.registration_number == reg).first()
     if vehicle:
-        data = json.loads(vehicle.data)
+        data = json.loads(vehicle.mot_data)
         return data.get('motTests', [])
     return []
 
